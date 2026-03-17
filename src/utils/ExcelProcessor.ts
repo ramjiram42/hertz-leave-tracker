@@ -48,15 +48,24 @@ export class ExcelProcessor {
         const name = row ? row[0] : null;
         if (!name || typeof name !== 'string') continue;
         
-        const allowedEmployees = ['Ramanjnneyulu P', 'Reshma G', 'Akash', 'Siddharth'];
-        const normalizedName = name.trim();
-        if (!allowedEmployees.includes(normalizedName)) continue;
+        const nameMap: Record<string, string> = {
+          'Ramanjneyulu P': 'Ramanjnneyulu P',
+          'Ramanjnneyulu P': 'Ramanjnneyulu P',
+          'Reshma G': 'Reshma G',
+          'Akash': 'Akash',
+          'Siddharth': 'Siddharth'
+        };
 
-        const empId = `emp-${name.replace(/\s+/g, '-').toLowerCase()}`;
+        const normalizedName = name.trim();
+        const officialName = nameMap[normalizedName];
+        
+        if (!officialName) continue;
+
+        const empId = `emp-${officialName.replace(/\s+/g, '-').toLowerCase()}`;
         if (!employeeMap[empId]) {
           employees.push({
             id: empId,
-            name: name,
+            name: officialName,
             role: 'Team Member',
             team: 'General',
           });

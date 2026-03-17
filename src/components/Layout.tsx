@@ -71,7 +71,8 @@ export const Header: React.FC = () => {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: 'America/Denver'
     });
   };
 
