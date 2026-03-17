@@ -84,8 +84,7 @@ export class ExcelProcessor {
           else if (normalizedStatus === 'H') type = 'H';
 
           if (type) {
-            const date = new Date(2026, month, d);
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = `2026-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             
             requests.push({
               id: `req-${empId}-${dateStr}`,
