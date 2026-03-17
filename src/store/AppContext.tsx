@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { Employee, LeaveRequest } from '../types';
+import type { Employee, LeaveRequest, Notification } from '../types';
 import { ExcelProcessor } from '../utils/ExcelProcessor';
+import { format, parseISO } from 'date-fns';
 
 // Assuming Employee type in ../types.ts will be updated to include isAdmin?: boolean;
 // For local type safety within this file, we can define a local type that extends Employee
@@ -26,6 +27,10 @@ interface AppContextType {
   setRequests: (requests: LeaveRequest[]) => void;
   resetToTeamData: () => Promise<void>;
   slaStatus: 'ON_TRACK' | 'WARNING' | 'RISK';
+  notifications: Notification[];
+  addNotification: (message: string, type: 'info' | 'success' | 'warning') => void;
+  markAsRead: (id: string) => void;
+  clearNotifications: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -70,6 +75,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isAdmin: true,
   });
 
+  const [notifications, setNotifications] = useState<Notification[]>(() => {
+    const saved = localStorage.getItem('hertz_notifications');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('hertz_notifications', JSON.stringify(notifications));
+  }, [notifications]);
+
   useEffect(() => {
     const autoLoad = async () => {
       // If user has uploaded custom data, don't overwrite it with the default template
@@ -79,6 +93,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const { employees: fetchedEmps, requests: fetchedReqs } = await ExcelProcessor.fetchAndProcess();
         if (fetchedEmps.length > 0) {
+          // Detect new leaves on load if needed (optional, but let's stick to sync actions)
           setEmployees(fetchedEmps);
           setRequests(fetchedReqs);
         }
@@ -88,6 +103,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     autoLoad();
   }, []);
+
+  const addNotification = (message: string, type: 'info' | 'success' | 'warning' = 'info') => {
+    const newNotify: Notification = {
+      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      message,
+      timestamp: new Date().toISOString(),
+      isRead: false,
+      type
+    };
+    setNotifications(prev => [newNotify, ...prev].slice(0, 20)); // Keep last 20
+  };
+
+  const markAsRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
+  const clearNotifications = () => {
+    setNotifications([]);
+  };
 
   useEffect(() => {
     localStorage.setItem('hertz_requests', JSON.stringify(requests));
@@ -111,16 +145,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const resetToTeamData = async () => {
+    const previousRequests = [...requests];
     localStorage.removeItem('hertz_data_is_custom');
     localStorage.removeItem('hertz_employees');
     localStorage.removeItem('hertz_requests');
-    // Force a reload of the default tracker
+    
     try {
       const { employees: fetchedEmps, requests: fetchedReqs } = await ExcelProcessor.fetchAndProcess();
+      
+      // Compare and notify
+      const newRequests = fetchedReqs.filter(nr => !previousRequests.some(pr => pr.id === nr.id));
+      newRequests.forEach(req => {
+        const emp = fetchedEmps.find(e => e.id === req.employeeId);
+        const leaveType = req.type === 'P' ? 'Planned Leave' : req.type === 'S' ? 'Sick Leave' : 'Holiday';
+        const dateStr = format(parseISO(req.startDate), 'MMM d');
+        addNotification(`${emp?.name || 'A team member'} applied for ${leaveType} on ${dateStr}`, 'success');
+      });
+
       setEmployees(fetchedEmps);
       setRequests(fetchedReqs);
+      
+      if (newRequests.length === 0) {
+        addNotification('Sync complete: No new updates found.', 'info');
+      }
     } catch (e) {
       console.error('Failed to reset to team data', e);
+      addNotification('Failed to sync team data. Please check your connection.', 'warning');
     }
   };
 
@@ -149,7 +199,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateRequest,
       setRequests,
       resetToTeamData,
-      slaStatus
+      slaStatus,
+      notifications,
+      addNotification,
+      markAsRead,
+      clearNotifications
     }}>
       {children}
     </AppContext.Provider>

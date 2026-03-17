@@ -38,3 +38,11 @@ export interface DayStatus {
 export interface TeamMemberAvailability extends Employee {
   schedule: DayStatus[];
 }
+
+export interface Notification {
+  id: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+  type: 'info' | 'success' | 'warning';
+}
