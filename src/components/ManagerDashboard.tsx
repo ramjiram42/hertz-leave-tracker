@@ -6,8 +6,7 @@ import { Calendar, MapPin } from 'lucide-react';
 import type { Employee, LeaveRequest } from '../types';
 import { PUBLIC_HOLIDAYS } from '../constants/holidays';
 
-export const ManagerDashboard: React.FC = () => {
-  const { requests, employees } = useApp();
+  const { requests, employees, slaStatus } = useApp();
   const today = startOfToday();
   
   const [selectedMonth, setSelectedMonth] = useState<string | null>(format(today, 'MMM'));
@@ -21,28 +20,28 @@ export const ManagerDashboard: React.FC = () => {
 
   // Calculate KPI Values (Global defaults)
   const stats = useMemo(() => {
+    const todayStr = format(today, 'yyyy-MM-dd');
     const onLeaveToday = requests.filter((req: LeaveRequest) => {
-      if (!req.startDate || !req.endDate) return false;
-      try {
-        const start = parseISO(req.startDate);
-        const end = parseISO(req.endDate);
-        return isWithinInterval(today, { start, end });
-      } catch {
-        return false;
-      }
+      return req.startDate <= todayStr && req.endDate >= todayStr;
     }).length;
 
     const pending = requests.filter((req: LeaveRequest) => req.status === 'Pending').length;
     const totalTeam = employees.length || 10;
     const availablePercent = Math.round(((totalTeam - onLeaveToday) / totalTeam) * 100);
 
+    const slaLabel = {
+      'ON_TRACK': 'On Track',
+      'WARNING': 'Attention',
+      'RISK': 'At Risk'
+    }[slaStatus];
+
     return {
       available: `${availablePercent}%`,
       onLeave: onLeaveToday.toString(),
       pending: pending.toString(),
-      sla: availablePercent > 80 ? 'On Track' : 'At Risk'
+      sla: slaLabel
     };
-  }, [requests, employees, today]);
+  }, [requests, employees, today, slaStatus]);
 
   const upcomingLeaves = useMemo(() => {
     const endRange = addMonths(today, 1);
@@ -151,12 +150,18 @@ export const ManagerDashboard: React.FC = () => {
           { label: 'Team Available', value: stats.available, color: 'from-blue-500 to-blue-600' },
           { label: 'On Leave Today', value: stats.onLeave, color: 'from-purple-500 to-purple-600' },
           { label: 'Pending Requests', value: stats.pending, color: 'from-orange-500 to-orange-600' },
-          { label: 'SLA Status', value: stats.sla, color: stats.sla === 'On Track' ? 'from-emerald-500 to-emerald-600' : 'from-red-500 to-red-600' },
+          { 
+            label: 'SLA Status', 
+            value: stats.sla, 
+            color: slaStatus === 'ON_TRACK' ? 'from-emerald-500 to-emerald-600' : 
+                   slaStatus === 'WARNING' ? 'from-amber-400 to-amber-600' : 
+                   'from-rose-500 to-rose-600' 
+          },
         ].map((kpi, i) => (
-          <div key={i} className="glass-card p-6 overflow-hidden relative group border-slate-200">
-            <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${kpi.color}`}></div>
-            <p className="text-slate-500 text-sm font-medium">{kpi.label}</p>
-            <h3 className="text-3xl font-bold mt-2 text-slate-900 group-hover:scale-110 transition-transform origin-left duration-300">{kpi.value}</h3>
+          <div key={i} className="glass-card p-6 overflow-hidden relative group border-slate-200 transition-all duration-500">
+            <div className={`absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b ${kpi.color} transition-all duration-500`}></div>
+            <p className="text-slate-500 text-sm font-bold uppercase tracking-tighter">{kpi.label}</p>
+            <h3 className="text-3xl font-black mt-2 text-slate-900 group-hover:translate-x-1 transition-transform duration-300">{kpi.value}</h3>
           </div>
         ))}
       </div>
