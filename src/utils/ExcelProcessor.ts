@@ -48,7 +48,7 @@ export class ExcelProcessor {
         const name = row ? row[0] : null;
         if (!name || typeof name !== 'string') continue;
         
-        const allowedEmployees = ['Ramanjneyulu P', 'Reshma G', 'Akash', 'Siddharth'];
+        const allowedEmployees = ['Ramanjnneyulu P', 'Reshma G', 'Akash', 'Siddharth'];
         const normalizedName = name.trim();
         if (!allowedEmployees.includes(normalizedName)) continue;
 

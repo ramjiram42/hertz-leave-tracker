@@ -41,7 +41,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
     return [
-      { id: 'emp-ramanjneyulu-p', name: 'Ramanjneyulu P', role: 'Team Member', team: 'Hertz Core' },
+      { id: 'emp-ramanjnneyulu-p', name: 'Ramanjnneyulu P', role: 'Team Member', team: 'Hertz Core' },
       { id: 'emp-reshma-g', name: 'Reshma G', role: 'Team Member', team: 'Hertz Core' },
       { id: 'emp-akash', name: 'Akash', role: 'Team Member', team: 'Hertz Core' },
       { id: 'emp-siddharth', name: 'Siddharth', role: 'Team Member', team: 'Hertz Core' }
