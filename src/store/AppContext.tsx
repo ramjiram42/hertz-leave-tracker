@@ -25,6 +25,7 @@ interface AppContextType {
   updateRequest: (id: string, updates: Partial<LeaveRequest>) => void;
   setRequests: (requests: LeaveRequest[]) => void;
   resetToTeamData: () => Promise<void>;
+  slaStatus: 'ON_TRACK' | 'WARNING' | 'RISK';
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -123,6 +124,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const slaStatus = React.useMemo(() => {
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Denver' }); // YYYY-MM-DD in MT
+    const totalTeam = employees.length || 1;
+    const onLeaveToday = requests.filter(req => {
+      return req.startDate <= todayStr && req.endDate >= todayStr;
+    }).length;
+
+    const availablePercent = ((totalTeam - onLeaveToday) / totalTeam) * 100;
+    
+    if (availablePercent >= 80) return 'ON_TRACK';
+    if (availablePercent >= 50) return 'WARNING';
+    return 'RISK';
+  }, [requests, employees]);
+
   return (
     <AppContext.Provider value={{ 
       employees, 
@@ -133,7 +148,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addRequest, 
       updateRequest,
       setRequests,
-      resetToTeamData
+      resetToTeamData,
+      slaStatus
     }}>
       {children}
     </AppContext.Provider>

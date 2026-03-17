@@ -8,8 +8,32 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { user } = useApp();
+  const { user, slaStatus } = useApp();
   
+  const themeColors = {
+    ON_TRACK: {
+      primary: 'bg-emerald-600',
+      active: 'bg-emerald-600',
+      glow: 'shadow-emerald-600/20',
+      hover: 'hover:text-emerald-600 hover:bg-emerald-50',
+      sidebar: 'bg-emerald-50/10'
+    },
+    WARNING: {
+      primary: 'bg-amber-500',
+      active: 'bg-amber-500',
+      glow: 'shadow-amber-500/20',
+      hover: 'hover:text-amber-600 hover:bg-amber-50',
+      sidebar: 'bg-amber-50/10'
+    },
+    RISK: {
+      primary: 'bg-rose-500',
+      active: 'bg-rose-500',
+      glow: 'shadow-rose-500/20',
+      hover: 'hover:text-rose-600 hover:bg-rose-50',
+      sidebar: 'bg-rose-50/10'
+    }
+  }[slaStatus];
+
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     ...(user?.isAdmin ? [
@@ -19,9 +43,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   ];
 
   return (
-    <aside className="w-64 glass-card m-4 p-6 flex flex-col h-[calc(100vh-2rem)] border-slate-200">
+    <aside className={`w-64 glass-card m-4 p-6 flex flex-col h-[calc(100vh-2rem)] border-slate-200 transition-colors duration-500 ${themeColors.sidebar}`}>
       <div className="flex items-center gap-3 mb-12">
-        <div className="w-10 h-10 bg-[#C41E3A] rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
+        <div className={`w-10 h-10 ${themeColors.primary} rounded-xl flex items-center justify-center shadow-lg ${themeColors.glow} transition-colors duration-500`}>
           <span className="text-xl font-bold text-white">H</span>
         </div>
         <div>
@@ -35,10 +59,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-500 ${
               activeTab === item.id
-                ? 'bg-[#C41E3A] text-white shadow-lg shadow-red-600/20'
-                : 'text-slate-600 hover:text-[#C41E3A] hover:bg-[#C41E3A]/5'
+                ? `${themeColors.active} text-white shadow-lg ${themeColors.glow}`
+                : `text-slate-600 ${themeColors.hover}`
             }`}
           >
             <item.icon size={20} />
@@ -59,7 +83,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
 export const Header: React.FC = () => {
   const [now, setNow] = React.useState(new Date());
-  const { user } = useApp();
+  const { user, slaStatus } = useApp();
+
+  const themeColors = {
+    ON_TRACK: { text: 'text-emerald-600', border: 'border-emerald-200', bg: 'bg-emerald-50/50', gradient: 'from-emerald-500 to-emerald-700' },
+    WARNING: { text: 'text-amber-500', border: 'border-amber-200', bg: 'bg-amber-50/50', gradient: 'from-amber-400 to-amber-600' },
+    RISK: { text: 'text-rose-500', border: 'border-rose-200', bg: 'bg-rose-50/50', gradient: 'from-rose-500 to-rose-700' }
+  }[slaStatus];
 
   React.useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -87,12 +117,12 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-24 flex items-center justify-between px-8 bg-white/40 backdrop-blur-md border-b border-white/10 relative z-10">
+    <header className="h-24 flex items-center justify-between px-8 bg-white/40 backdrop-blur-md border-b border-white/10 relative z-10 transition-colors duration-500">
       <div className="flex flex-col">
         <h2 className="text-2xl font-black text-slate-900 tracking-tight">
           Intelligent Automation Team - Hertz
         </h2>
-        <p className="text-sm font-medium text-[#C41E3A] flex items-center gap-2">
+        <p className={`text-sm font-bold ${themeColors.text} flex items-center gap-2 transition-colors duration-500`}>
           <Calendar size={14} />
           {formatDate(now)}
         </p>
@@ -100,7 +130,7 @@ export const Header: React.FC = () => {
 
       <div className="flex items-center gap-8">
         {/* Timezones */}
-        <div className="flex items-center gap-6 px-6 py-2 bg-slate-900/5 rounded-2xl border border-white/20">
+        <div className={`flex items-center gap-6 px-6 py-2 ${themeColors.bg} rounded-2xl border ${themeColors.border} transition-all duration-500 shadow-sm`}>
           <div className="text-center">
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mountain (MST/MDT)</p>
             <p className="text-lg font-mono font-bold text-slate-800">{formatTime(now, 'America/Denver')}</p>
@@ -113,21 +143,21 @@ export const Header: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-6">
-          <button className="relative p-2.5 text-slate-400 hover:text-[#C41E3A] transition-all hover:bg-white/50 rounded-xl">
+          <button className={`relative p-2.5 text-slate-400 hover:${themeColors.text} transition-all hover:bg-white/50 rounded-xl`}>
             <Bell size={22} />
-            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#C41E3A] rounded-full border-2 border-white"></span>
+            <span className={`absolute top-2.5 right-2.5 w-2 h-2 ${themeColors.text.replace('text', 'bg')} rounded-full border-2 border-white`}></span>
           </button>
           
           <div className="flex items-center gap-4 pl-6 border-l border-slate-200">
             <div className="text-right">
               <p className="text-sm font-black text-slate-900 leading-none mb-1">{user?.name || 'Ram'}</p>
-              <p className="text-[10px] font-bold text-[#C41E3A] uppercase tracking-tighter opacity-80">{user?.role || 'Admin'}</p>
+              <p className={`text-[10px] font-bold ${themeColors.text} uppercase tracking-tighter opacity-80`}>{user?.role || 'Admin'}</p>
             </div>
             <div className="relative">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C41E3A] to-[#ff4d6d] p-[2px] shadow-lg shadow-red-600/20">
+              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${themeColors.gradient} p-[2px] shadow-lg shadow-slate-200 transition-all duration-500`}>
                 <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center overflow-hidden border border-white/50">
                   <img 
-                    src={`https://ui-avatars.com/api/?name=${user?.name || 'Ram'}&background=C41E3A&color=fff&bold=true`} 
+                    src={`https://ui-avatars.com/api/?name=${user?.name || 'Ram'}&background=${themeColors.gradient.split(' ')[0].split('-')[1] === 'emerald' ? '10b981' : themeColors.gradient.split(' ')[0].split('-')[1] === 'amber' ? 'f59e0b' : 'f43f5e'}&color=fff&bold=true`} 
                     alt="Avatar" 
                     className="w-full h-full object-cover"
                   />
