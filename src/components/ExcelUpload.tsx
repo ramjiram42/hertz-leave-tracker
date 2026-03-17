@@ -9,7 +9,7 @@ export const ExcelUpload: React.FC = () => {
   const [manualStatus, setManualStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isDragging, setIsDragging] = useState(false);
   
-  const { addRequest, setEmployees } = useApp();
+  const { setRequests, setEmployees } = useApp();
 
   const handleFile = async (file: File) => {
     if (!file.name.endsWith('.xlsx')) {
@@ -20,13 +20,14 @@ export const ExcelUpload: React.FC = () => {
     setIsProcessing(true);
     setManualStatus('idle');
 
-    try {
+      try {
       const data = await ExcelProcessor.processTracker(file);
       
-      // Auto-commit data
+      // Auto-commit data - Replace instead of append
       if (data.employees.length > 0) setEmployees(data.employees);
-      data.requests.forEach(req => addRequest(req));
+      setRequests(data.requests);
       
+      localStorage.setItem('hertz_data_is_custom', 'true');
       setManualStatus('success');
       setTimeout(() => setManualStatus('idle'), 3000);
     } catch (err) {

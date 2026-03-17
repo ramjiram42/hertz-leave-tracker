@@ -24,6 +24,7 @@ interface AppContextType {
   addRequest: (request: LeaveRequest) => void;
   updateRequest: (id: string, updates: Partial<LeaveRequest>) => void;
   setRequests: (requests: LeaveRequest[]) => void;
+  resetToTeamData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -70,6 +71,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     const autoLoad = async () => {
+      // If user has uploaded custom data, don't overwrite it with the default template
+      const isCustom = localStorage.getItem('hertz_data_is_custom') === 'true';
+      if (isCustom) return;
+
       try {
         const { employees: fetchedEmps, requests: fetchedReqs } = await ExcelProcessor.fetchAndProcess();
         if (fetchedEmps.length > 0) {
@@ -104,6 +109,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
   };
 
+  const resetToTeamData = async () => {
+    localStorage.removeItem('hertz_data_is_custom');
+    localStorage.removeItem('hertz_employees');
+    localStorage.removeItem('hertz_requests');
+    // Force a reload of the default tracker
+    try {
+      const { employees: fetchedEmps, requests: fetchedReqs } = await ExcelProcessor.fetchAndProcess();
+      setEmployees(fetchedEmps);
+      setRequests(fetchedReqs);
+    } catch (e) {
+      console.error('Failed to reset to team data', e);
+    }
+  };
+
   return (
     <AppContext.Provider value={{ 
       employees, 
@@ -113,7 +132,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setEmployees, 
       addRequest, 
       updateRequest,
-      setRequests 
+      setRequests,
+      resetToTeamData
     }}>
       {children}
     </AppContext.Provider>

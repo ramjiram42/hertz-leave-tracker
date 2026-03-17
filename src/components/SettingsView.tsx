@@ -1,8 +1,11 @@
 import React from 'react';
 import { ExcelUpload } from './ExcelUpload';
 import { Settings, Database, Shield, BellRing, Info } from 'lucide-react';
+import { useApp } from '../store/AppContext';
 
 export const SettingsView: React.FC = () => {
+  const { resetToTeamData } = useApp();
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4 mb-2">
@@ -49,17 +52,35 @@ export const SettingsView: React.FC = () => {
           </section>
         </div>
 
-        {/* Right: The Upload Zone */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-8">
           <div className="glass-card p-8 bg-premium-500/5 border-premium-500/20">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <Database className="w-5 h-5 text-premium-400" />
-              Sync Source: Excel Tracker
-            </h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Database className="w-5 h-5 text-premium-400" />
+                Local Override: Your View
+              </h2>
+              <button 
+                onClick={async () => {
+                  await resetToTeamData();
+                  window.location.reload();
+                }}
+                className="text-xs px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center gap-2 border border-white/10"
+              >
+                Reset to Team Data
+              </button>
+            </div>
+            
+            <p className="text-sm text-slate-400 mb-6">
+              Uploading a file here will update the dashboard for <strong>your computer only</strong>. 
+              Useful for individual planning or "what-if" scenarios.
+            </p>
+
             <ExcelUpload />
-            <div className="mt-8 p-4 bg-blue-500/5 rounded-xl border border-blue-500/10">
-              <p className="text-xs text-blue-300 leading-relaxed">
-                <strong>Note:</strong> SharePoint automatic sync has been disabled. Please upload the .xlsx file to see the latest changes on your dashboard.
+            
+            <div className="mt-8 p-4 bg-[#C41E3A]/5 rounded-xl border border-[#C41E3A]/10">
+              <p className="text-xs text-red-300 leading-relaxed">
+                <strong>Team Sync Tip:</strong> To update the data for <strong>everyone</strong> in the team, 
+                you must replace the master Excel file in the project folder and push to GitHub.
               </p>
             </div>
           </div>
