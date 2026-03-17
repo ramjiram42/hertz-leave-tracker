@@ -6,6 +6,7 @@ import { Calendar, MapPin } from 'lucide-react';
 import type { Employee, LeaveRequest } from '../types';
 import { PUBLIC_HOLIDAYS } from '../constants/holidays';
 
+export const ManagerDashboard: React.FC = () => {
   const { requests, employees, slaStatus } = useApp();
   const today = startOfToday();
   
