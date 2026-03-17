@@ -58,26 +58,81 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 };
 
 export const Header: React.FC = () => {
+  const [now, setNow] = React.useState(new Date());
   const { user } = useApp();
-  
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  const formatTime = (date: Date, timeZone: string) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+      timeZone
+    });
+  };
+
   return (
-    <header className="h-20 flex items-center justify-between px-8 bg-white/50 backdrop-blur-sm border-b border-slate-200">
-      <h2 className="text-2xl font-bold text-slate-900">
-        Intelligent Automation Team - Hertz
-      </h2>
-      <div className="flex items-center gap-6">
-        <button className="relative p-2 text-slate-400 hover:text-[#C41E3A] transition-colors">
-          <Bell size={22} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-[#C41E3A] rounded-full border-2 border-white"></span>
-        </button>
-        <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
-          <div className="text-right">
-            <p className="text-sm font-bold text-slate-900">{user?.name || 'Ram'}</p>
-            <p className="text-xs text-slate-500">{user?.role || 'Admin'}</p>
+    <header className="h-24 flex items-center justify-between px-8 bg-white/40 backdrop-blur-md border-b border-white/10 relative z-10">
+      <div className="flex flex-col">
+        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          Intelligent Automation Team - Hertz
+        </h2>
+        <p className="text-sm font-medium text-[#C41E3A] flex items-center gap-2">
+          <Calendar size={14} />
+          {formatDate(now)}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-8">
+        {/* Timezones */}
+        <div className="flex items-center gap-6 px-6 py-2 bg-slate-900/5 rounded-2xl border border-white/20">
+          <div className="text-center">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mountain (MST/MDT)</p>
+            <p className="text-lg font-mono font-bold text-slate-800">{formatTime(now, 'America/Denver')}</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-400 to-red-600 p-[2px]">
-            <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
-              <img src={`https://ui-avatars.com/api/?name=${user?.name || 'Ram'}&background=C41E3A&color=fff`} alt="Avatar" />
+          <div className="w-[1px] h-8 bg-slate-300"></div>
+          <div className="text-center">
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">IST (India)</p>
+            <p className="text-lg font-mono font-bold text-slate-800">{formatTime(now, 'Asia/Kolkata')}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <button className="relative p-2.5 text-slate-400 hover:text-[#C41E3A] transition-all hover:bg-white/50 rounded-xl">
+            <Bell size={22} />
+            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-[#C41E3A] rounded-full border-2 border-white"></span>
+          </button>
+          
+          <div className="flex items-center gap-4 pl-6 border-l border-slate-200">
+            <div className="text-right">
+              <p className="text-sm font-black text-slate-900 leading-none mb-1">{user?.name || 'Ram'}</p>
+              <p className="text-[10px] font-bold text-[#C41E3A] uppercase tracking-tighter opacity-80">{user?.role || 'Admin'}</p>
+            </div>
+            <div className="relative">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#C41E3A] to-[#ff4d6d] p-[2px] shadow-lg shadow-red-600/20">
+                <div className="w-full h-full rounded-2xl bg-white flex items-center justify-center overflow-hidden border border-white/50">
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${user?.name || 'Ram'}&background=C41E3A&color=fff&bold=true`} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-sm"></div>
             </div>
           </div>
         </div>
