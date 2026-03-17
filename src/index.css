@@ -31,7 +31,7 @@ body {
   body {
     background-color: #000000;
     background-image: 
-      linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.2)),
+      linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)),
       url("/sea_view_bg.png");
     background-size: cover;
     background-position: center bottom;
