@@ -122,10 +122,10 @@ export const Header: React.FC = () => {
   return (
     <header className="h-24 flex items-center justify-between px-8 bg-white/40 backdrop-blur-md border-b border-white/10 relative z-10 transition-colors duration-500">
       <div className="flex flex-col">
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+        <h2 className="text-2xl font-black text-white tracking-tight">
           Intelligent Automation Team - Hertz
         </h2>
-        <p className={`text-sm font-bold ${themeColors.text} flex items-center gap-2 transition-colors duration-500`}>
+        <p className="text-sm font-bold text-white flex items-center gap-2 transition-colors duration-500">
           <Calendar size={14} />
           {formatDate(now)}
         </p>
