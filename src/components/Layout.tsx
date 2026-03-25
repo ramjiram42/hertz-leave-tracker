@@ -62,7 +62,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-500 ${
               activeTab === item.id
                 ? `${themeColors.active} text-white shadow-lg ${themeColors.glow}`
-                : `text-slate-600 ${themeColors.hover}`
+                : `text-slate-300 ${themeColors.hover}`
             }`}
           >
             <item.icon size={20} />
@@ -72,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       </nav>
 
       <div className="mt-auto pt-6 border-t border-white/5">
-        <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-400/5 rounded-xl transition-all">
+        <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-200 hover:text-red-400 hover:bg-red-400/5 rounded-xl transition-all">
           <LogOut size={20} />
           <span className="font-medium">Logout</span>
         </button>
@@ -171,7 +171,11 @@ export const Header: React.FC = () => {
                       Clear All
                     </button>
                   )}
-                  <button onClick={() => setShowNotifications(false)} className="text-slate-400 hover:text-slate-600">
+                  <button 
+                    onClick={() => setShowNotifications(false)} 
+                    className="text-slate-400 hover:text-slate-600"
+                    aria-label="Close notifications"
+                  >
                     <X size={16} />
                   </button>
                 </div>

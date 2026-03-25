@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useApp } from '../store/AppContext';
-import { format, isWithinInterval, parseISO, startOfToday, addMonths, isSameMonth, isAfter } from 'date-fns';
+import { format, isWithinInterval, parseISO, startOfToday, addMonths, addDays, isSameMonth, isAfter } from 'date-fns';
 import { Calendar, MapPin } from 'lucide-react';
 import type { Employee, LeaveRequest } from '../types';
 import { PUBLIC_HOLIDAYS } from '../constants/holidays';
@@ -45,10 +45,12 @@ export const ManagerDashboard: React.FC = () => {
   }, [requests, employees, today, slaStatus]);
 
   const upcomingLeaves = useMemo(() => {
-    const endRange = addMonths(today, 1);
-    return requests
+    const endRange = addDays(today, 30);
+    
+    // 1. Get all Planned and Sick leaves from requests
+    const individualLeaves = requests
       .filter((req: LeaveRequest) => {
-        if (!req.startDate || req.type !== 'P') return false; // Filter specifically for Planned leaves
+        if (!req.startDate || req.type === 'H') return false; // Filter out Holidays from individual list
         try {
           const start = parseISO(req.startDate);
           return isWithinInterval(start, { start: today, end: endRange });
@@ -59,12 +61,31 @@ export const ManagerDashboard: React.FC = () => {
       .map((req: LeaveRequest) => {
         const emp = employees.find((e: Employee) => e.id === req.employeeId);
         return {
-          ...req,
-          employeeName: emp?.name || 'Unknown',
-          displayDate: format(parseISO(req.startDate), 'MMM d')
+          id: req.id,
+          name: emp?.name || 'Unknown',
+          type: req.type,
+          displayDate: format(parseISO(req.startDate), 'MMM d'),
+          sortDate: parseISO(req.startDate)
         };
+      });
+
+    // 2. Get Public Holidays in the same range
+    const holidayEntries = PUBLIC_HOLIDAYS
+      .filter(h => {
+        const date = parseISO(h.date);
+        return isWithinInterval(date, { start: today, end: endRange });
       })
-      .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+      .map(h => ({
+        id: `holiday-${h.date}`,
+        name: h.name,
+        type: 'H' as const,
+        displayDate: format(parseISO(h.date), 'MMM d'),
+        sortDate: parseISO(h.date)
+      }));
+
+    // Combine and sort
+    return [...individualLeaves, ...holidayEntries]
+      .sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
   }, [requests, employees, today]);
 
   // Calculate Chart Data (Current and Next Month Only)
@@ -82,7 +103,7 @@ export const ManagerDashboard: React.FC = () => {
   }, [requests, visibleMonthLabels]);
 
   // Details for Selected Month
-  const { selectedHolidays, plannedLeaves, sickLeaves } = useMemo(() => {
+  const { selectedHolidays, plannedLeaves } = useMemo(() => {
     if (!selectedMonth) return { selectedHolidays: [], plannedLeaves: [], sickLeaves: [] };
     
     const monthIndex = visibleMonthLabels.indexOf(selectedMonth);
@@ -97,21 +118,23 @@ export const ManagerDashboard: React.FC = () => {
       }
     });
 
-    const details = monthRequests.map((req: LeaveRequest) => {
-      const emp = employees.find((e: Employee) => e.id === req.employeeId);
-      return {
-        id: req.id,
-        name: emp?.name || 'Unknown Employee',
-        date: format(parseISO(req.startDate), 'MMM d'),
-        type: req.type as 'P' | 'S' | 'H',
-        typeName: req.type === 'H' ? 'Holiday' : req.type === 'P' ? 'Planned' : 'Sick'
-      };
-    });
+    const holidaysInMonth = PUBLIC_HOLIDAYS.filter(h => isSameMonth(parseISO(h.date), targetDate));
+    
+    const plannedDetails = monthRequests
+      .filter(r => r.type === 'P')
+      .map((req: LeaveRequest) => {
+        const emp = employees.find((e: Employee) => e.id === req.employeeId);
+        return {
+          id: req.id,
+          name: emp?.name || 'Unknown Employee',
+          date: format(parseISO(req.startDate), 'MMM d'),
+          type: 'P' as const
+        };
+      });
 
     return {
-      selectedHolidays: details.filter(d => d.type === 'H'),
-      plannedLeaves: details.filter(d => d.type === 'P'),
-      sickLeaves: details.filter(d => d.type === 'S')
+      selectedHolidays: holidaysInMonth,
+      plannedLeaves: plannedDetails
     };
   }, [selectedMonth, requests, employees, today, visibleMonthLabels]);
 
@@ -130,8 +153,7 @@ export const ManagerDashboard: React.FC = () => {
       return {
         id: emp.id,
         name: emp.name,
-        planned: monthRequests.filter(r => r.type === 'P').length,
-        sick: monthRequests.filter(r => r.type === 'S').length
+        planned: monthRequests.filter(r => r.type === 'P').length
       };
     });
   }, [employees, requests, today]);
@@ -188,10 +210,10 @@ export const ManagerDashboard: React.FC = () => {
                   leave.type === 'P' ? 'bg-[#C41E3A]' :
                   'bg-orange-600'
                 }`}>
-                  {leave.employeeName.charAt(0)}
+                  {leave.type === 'H' ? <MapPin className="w-5 h-5" /> : leave.name.charAt(0)}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-sm font-bold text-slate-900 truncate">{leave.employeeName}</p>
+                  <p className="text-sm font-bold text-slate-900 truncate">{leave.name}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-[10px] font-bold uppercase ${
                       leave.type === 'H' ? 'text-emerald-600' :
@@ -275,9 +297,7 @@ export const ManagerDashboard: React.FC = () => {
                 <thead className="bg-slate-50 border-b border-slate-100">
                   <tr>
                     <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-tighter text-[10px]">Team Member</th>
-                    <th className="px-6 py-4 font-bold text-[#C41E3A] uppercase tracking-tighter text-[10px] text-center">Planned</th>
-                    <th className="px-6 py-4 font-bold text-orange-600 uppercase tracking-tighter text-[10px] text-center">Sick</th>
-                    <th className="px-6 py-4 font-bold text-slate-900 uppercase tracking-tighter text-[10px] text-right">Total</th>
+                    <th className="px-6 py-4 font-bold text-[#C41E3A] uppercase tracking-tighter text-[10px] text-right">Planned Leaves</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
@@ -298,19 +318,9 @@ export const ManagerDashboard: React.FC = () => {
                             <span className="font-bold text-slate-700">{item.name}</span>
                           </div>
                         </td>
-                        <td className={`px-6 py-4 text-center transition-colors ${item.planned > 0 ? 'bg-red-50/30' : ''}`}>
-                          <span className={`inline-flex items-center justify-center min-w-[28px] h-[28px] px-2 rounded-lg font-bold text-xs ${item.planned > 0 ? 'bg-[#C41E3A] text-white shadow-sm' : 'bg-slate-100 text-slate-400'}`}>
-                            {item.planned}
-                          </span>
-                        </td>
-                        <td className={`px-6 py-4 text-center transition-colors ${item.sick > 0 ? 'bg-orange-50/30' : ''}`}>
-                          <span className={`inline-flex items-center justify-center min-w-[28px] h-[28px] px-2 rounded-lg font-bold text-xs ${item.sick > 0 ? 'bg-orange-500 text-white shadow-sm' : 'bg-slate-100 text-slate-400'}`}>
-                            {item.sick}
-                          </span>
-                        </td>
                         <td className="px-6 py-4 text-right">
-                          <span className={`font-bold text-sm ${item.planned + item.sick > 0 ? 'text-slate-900' : 'text-slate-300'}`}>
-                            {item.planned + item.sick}d
+                          <span className={`inline-flex items-center justify-center min-w-[32px] h-[32px] px-3 rounded-lg font-bold text-sm ${item.planned > 0 ? 'bg-red-50 text-[#C41E3A] border border-red-100' : 'bg-slate-50 text-slate-300'}`}>
+                            {item.planned}d
                           </span>
                         </td>
                       </tr>
@@ -340,87 +350,63 @@ export const ManagerDashboard: React.FC = () => {
                     {selectedHolidays.length} Holidays
                   </span>
                   <span className="text-[10px] text-red-600 font-bold bg-red-50 px-3 py-1 rounded-full border border-red-100 uppercase">
-                    {plannedLeaves.length} Planned
-                  </span>
-                  <span className="text-[10px] text-orange-600 font-bold bg-orange-50 px-3 py-1 rounded-full border border-orange-100 uppercase">
-                    {sickLeaves.length} Sick
+                    {plannedLeaves.length} Planned Leaves
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Team Holidays Column */}
-                <div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                {/* Global Holidays Column */}
+                <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    Holidays
+                    Company Holidays
                   </h4>
                   {selectedHolidays.length > 0 ? (
-                    <div className="space-y-2">
-                      {selectedHolidays.map((item) => (
-                        <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-emerald-500/30 transition-all group">
-                          <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold text-xs shadow-sm">
-                            {item.name.charAt(0)}
+                    <div className="space-y-3">
+                      {selectedHolidays.map((h, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex flex-col items-center justify-center font-bold">
+                              <span className="text-[10px] uppercase leading-none">{format(parseISO(h.date), 'MMM')}</span>
+                              <span className="text-sm leading-none mt-0.5">{format(parseISO(h.date), 'dd')}</span>
+                            </div>
+                            <p className="text-slate-900 font-bold text-sm tracking-tight">{h.name}</p>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-slate-900 font-bold text-xs group-hover:text-emerald-600 transition-colors uppercase truncate">{item.name}</p>
-                            <p className="text-[10px] text-slate-500 truncate">{item.date}</p>
-                          </div>
+                          <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase">All Members</span>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[10px] text-slate-600 italic py-2">None</p>
+                    <p className="text-xs text-slate-400 italic">No holidays this month</p>
                   )}
                 </div>
 
-                {/* Planned Leaves Column */}
-                <div>
+                {/* Team Planned Leaves Column */}
+                <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    Planned
+                    <div className="w-2 h-2 rounded-full bg-[#C41E3A]"></div>
+                    Planned Leaves
                   </h4>
                   {plannedLeaves.length > 0 ? (
-                    <div className="space-y-2">
-                      {plannedLeaves.map((item: { id: string; name: string; date: string }) => (
-                        <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-blue-500/30 transition-all group">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs">
-                            {item.name.charAt(0)}
+                    <div className="space-y-3">
+                      {plannedLeaves.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-100 shadow-sm group">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-[#C41E3A] text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-110 transition-transform">
+                              {item.name.charAt(0)}
+                            </div>
+                            <div>
+                              <p className="text-slate-900 font-bold text-sm group-hover:text-[#C41E3A] transition-colors">{item.name}</p>
+                              <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{item.date}</p>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-slate-900 font-bold text-xs group-hover:text-blue-600 transition-colors uppercase truncate">{item.name}</p>
-                            <p className="text-[10px] text-slate-500 truncate">{item.date}</p>
-                          </div>
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#C41E3A]/20"></div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[10px] text-slate-600 italic py-2">None</p>
-                  )}
-                </div>
-
-                {/* Sick Leaves Column */}
-                <div>
-                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                    Sick
-                  </h4>
-                  {sickLeaves.length > 0 ? (
-                    <div className="space-y-2">
-                      {sickLeaves.map((item: { id: string; name: string; date: string }) => (
-                        <div key={item.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 hover:border-red-500/30 transition-all group">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-xs">
-                            {item.name.charAt(0)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-slate-900 font-bold text-xs group-hover:text-red-600 transition-colors uppercase truncate">{item.name}</p>
-                            <p className="text-[10px] text-slate-500 truncate">{item.date}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-slate-600 italic py-2">None</p>
+                    <p className="text-xs text-slate-400 italic">No leaves planned for this month</p>
                   )}
                 </div>
               </div>
