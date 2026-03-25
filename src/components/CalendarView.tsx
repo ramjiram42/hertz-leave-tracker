@@ -42,7 +42,7 @@ export const CalendarView: React.FC = () => {
               'Week Off': 'text-slate-400 bg-slate-50/50',
               'Planned': 'bg-orange-50 text-orange-600 border-orange-100 shadow-sm',
               'Sick': 'bg-pink-50 text-pink-600 border-pink-100 shadow-sm',
-              'Approved': 'hover:bg-slate-50 text-slate-900 border-slate-100',
+              'Approved': 'bg-emerald-50/30 text-emerald-700 border-emerald-100/50 hover:bg-emerald-50',
             };
 
             return (
@@ -116,7 +116,7 @@ export const CalendarView: React.FC = () => {
           { label: 'Company Holiday', color: 'bg-red-50 text-[#C41E3A] border-red-200' },
           { label: 'Planned Leave', color: 'bg-orange-50 text-orange-600 border-orange-200' },
           { label: 'Sick Leave', color: 'bg-pink-50 text-pink-600 border-pink-200' },
-          { label: 'Work Day', color: 'bg-white text-slate-900 border-slate-200' },
+          { label: 'Work Day', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
         ].map(legend => (
           <div key={legend.label} className={`flex items-center gap-3 px-4 py-3 rounded-xl border shadow-sm ${legend.color}`}>
             <div className={`w-3 h-3 rounded-full ${legend.color.split(' ')[0].replace('-50', '-500')}`}></div>
