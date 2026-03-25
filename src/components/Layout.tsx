@@ -49,8 +49,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           <span className="text-xl font-bold text-white">H</span>
         </div>
         <div>
-          <h1 className="text-lg font-bold tracking-tight text-slate-900">Hertz 2026</h1>
-          <p className="text-xs text-slate-500">Leave Tracker</p>
+          <h1 className="text-lg font-bold tracking-tight text-white">Hertz 2026</h1>
+          <p className="text-xs text-slate-300">Leave Tracker</p>
         </div>
       </div>
 
