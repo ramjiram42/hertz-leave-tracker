@@ -1,4 +1,4 @@
-import { isWeekend } from 'date-fns';
+import { isWeekend, format } from 'date-fns';
 import { PUBLIC_HOLIDAYS } from '../constants/holidays';
 import type { PublicHoliday } from '../constants/holidays';
 import type { LeaveRequest, LeaveStatus } from '../types';
@@ -7,9 +7,13 @@ export const resolveStatus = (
   date: Date,
   requests: LeaveRequest[]
 ): LeaveStatus => {
-  const dateStr = date.toISOString().split('T')[0];
+  const dateStr = format(date, 'yyyy-MM-dd');
 
-  if (PUBLIC_HOLIDAYS.some((h: PublicHoliday) => h.date === dateStr)) return 'Holiday';
+  // Check both static PUBLIC_HOLIDAYS and 'H' type requests from Excel
+  const isPublicHoliday = PUBLIC_HOLIDAYS.some((h: PublicHoliday) => h.date === dateStr);
+  const isExcelHoliday = requests.some(r => r.type === 'H' && (dateStr >= r.startDate && dateStr <= r.endDate));
+  
+  if (isPublicHoliday || isExcelHoliday) return 'Holiday';
   if (isWeekend(date)) return 'Week Off';
 
   const activeRequests = requests.filter(r => {
