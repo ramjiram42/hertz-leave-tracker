@@ -133,15 +133,19 @@ export const Header: React.FC = () => {
 
       <div className="flex items-center gap-8">
         {/* Timezones */}
-        <div className={`flex items-center gap-6 px-6 py-2 ${themeColors.bg} rounded-2xl border ${themeColors.border} transition-all duration-500 shadow-sm`}>
-          <div className="text-center">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Mountain (MST/MDT)</p>
-            <p className="text-lg font-mono font-bold text-slate-800">{formatTime(now, 'America/Denver')}</p>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-blue-50/90 rounded-2xl border-2 border-blue-200 transition-all duration-500 shadow-[0_0_20px_-5px_rgba(59,130,246,0.5)]">
+            <div className="text-center">
+              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">MST/MDT</p>
+              <p className="text-xl font-mono font-black text-blue-900 leading-none mt-1">{formatTime(now, 'America/Denver')}</p>
+            </div>
           </div>
-          <div className="w-[1px] h-8 bg-slate-300"></div>
-          <div className="text-center">
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">IST (India)</p>
-            <p className="text-lg font-mono font-bold text-slate-800">{formatTime(now, 'Asia/Kolkata')}</p>
+          
+          <div className="flex items-center gap-3 px-5 py-2.5 bg-orange-50/90 rounded-2xl border-2 border-orange-200 transition-all duration-500 shadow-[0_0_20px_-5px_rgba(249,115,22,0.5)]">
+            <div className="text-center">
+              <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">IST (India)</p>
+              <p className="text-xl font-mono font-black text-orange-950 leading-none mt-1">{formatTime(now, 'Asia/Kolkata')}</p>
+            </div>
           </div>
         </div>
 
