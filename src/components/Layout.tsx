@@ -47,7 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       {/* Collapse Toggle */}
       <button 
         onClick={toggleSidebar}
-        className="absolute -right-3 top-20 w-6 h-6 bg-white rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm z-50 transition-transform hover:scale-110"
+        className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm z-50 transition-all hover:scale-110 active:scale-95"
       >
         {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
