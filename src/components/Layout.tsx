@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, LayoutDashboard, Settings, LogOut, Bell, Check, X, Info, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Calendar, LayoutDashboard, Settings, LogOut, Bell, Check, X, Info, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 
 interface SidebarProps {
@@ -8,7 +8,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
-  const { user, slaStatus } = useApp();
+  const { user, slaStatus, isSidebarCollapsed, toggleSidebar } = useApp();
   
   const themeColors = {
     ON_TRACK: {
@@ -43,15 +43,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   ];
 
   return (
-    <aside className={`w-64 glass-card m-4 p-6 flex flex-col h-[calc(100vh-2rem)] border-slate-200 transition-colors duration-500 ${themeColors.sidebar}`}>
-      <div className="flex items-center gap-3 mb-12">
-        <div className={`w-10 h-10 ${themeColors.primary} rounded-xl flex items-center justify-center shadow-lg ${themeColors.glow} transition-colors duration-500`}>
+    <aside className={`glass-card m-4 flex flex-col h-[calc(100vh-2rem)] border-slate-200 transition-all duration-500 relative ${themeColors.sidebar} ${isSidebarCollapsed ? 'w-20 p-4' : 'w-64 p-6'}`}>
+      {/* Collapse Toggle */}
+      <button 
+        onClick={toggleSidebar}
+        className="absolute -right-3 top-20 w-6 h-6 bg-white rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 shadow-sm z-50 transition-transform hover:scale-110"
+      >
+        {isSidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+      </button>
+
+      <div className={`flex items-center gap-3 mb-12 transition-all duration-500 ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+        <div className={`w-10 h-10 shrink-0 ${themeColors.primary} rounded-xl flex items-center justify-center shadow-lg ${themeColors.glow} transition-colors duration-500`}>
           <span className="text-xl font-bold text-white">H</span>
         </div>
-        <div>
-          <h1 className="text-lg font-bold tracking-tight text-white">Hertz 2026</h1>
-          <p className="text-xs text-slate-300">Leave Tracker</p>
-        </div>
+        {!isSidebarCollapsed && (
+          <div className="animate-in fade-in slide-in-from-left-2 duration-500">
+            <h1 className="text-lg font-bold tracking-tight text-white leading-tight">Hertz 2026</h1>
+            <p className="text-xs text-slate-300">Leave Tracker</p>
+          </div>
+        )}
       </div>
 
       <nav className="flex-1 space-y-2">
@@ -59,22 +69,46 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-500 ${
+            className={`w-full flex items-center rounded-xl transition-all duration-500 group relative ${
+              isSidebarCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'
+            } ${
               activeTab === item.id
                 ? `${themeColors.active} text-white shadow-lg ${themeColors.glow}`
                 : `text-slate-300 ${themeColors.hover}`
             }`}
+            title={isSidebarCollapsed ? item.label : ''}
           >
-            <item.icon size={20} />
-            <span className="font-medium">{item.label}</span>
+            <item.icon size={20} className="shrink-0" />
+            {!isSidebarCollapsed && (
+              <span className="font-medium animate-in fade-in slide-in-from-left-2 duration-500 whitespace-nowrap overflow-hidden">
+                {item.label}
+              </span>
+            )}
+            {isSidebarCollapsed && (
+              <div className="absolute left-full ml-4 px-3 py-1 bg-slate-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                {item.label}
+              </div>
+            )}
           </button>
         ))}
       </nav>
 
       <div className="mt-auto pt-6 border-t border-white/5">
-        <button className="w-full flex items-center gap-3 px-4 py-3 text-slate-200 hover:text-red-400 hover:bg-red-400/5 rounded-xl transition-all">
-          <LogOut size={20} />
-          <span className="font-medium">Logout</span>
+        <button 
+          className={`w-full flex items-center text-slate-200 hover:text-red-400 hover:bg-red-400/5 rounded-xl transition-all group relative ${
+            isSidebarCollapsed ? 'justify-center p-3' : 'gap-3 px-4 py-3'
+          }`}
+          title={isSidebarCollapsed ? 'Logout' : ''}
+        >
+          <LogOut size={20} className="shrink-0" />
+          {!isSidebarCollapsed && (
+            <span className="font-medium animate-in fade-in slide-in-from-left-2 duration-500">Logout</span>
+          )}
+          {isSidebarCollapsed && (
+            <div className="absolute left-full ml-4 px-3 py-1 bg-rose-600 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+              Logout
+            </div>
+          )}
         </button>
       </div>
     </aside>

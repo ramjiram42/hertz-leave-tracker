@@ -31,6 +31,8 @@ interface AppContextType {
   addNotification: (message: string, type: 'info' | 'success' | 'warning') => void;
   markAsRead: (id: string) => void;
   clearNotifications: () => void;
+  isSidebarCollapsed: boolean;
+  toggleSidebar: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -42,8 +44,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error('Failed to parse saved employees', e);
+      } catch {
+        console.error('Failed to parse saved employees');
       }
     }
     return [
@@ -60,8 +62,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) return parsed;
-      } catch (e) {
-        console.error('Failed to parse saved requests', e);
+      } catch {
+        console.error('Failed to parse saved requests');
       }
     }
     return [];
@@ -78,6 +80,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     const saved = localStorage.getItem('hertz_notifications');
     return saved ? JSON.parse(saved) : [];
+  });
+
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('hertz_sidebar_collapsed');
+    return saved === 'true';
   });
 
   useEffect(() => {
@@ -97,7 +104,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setEmployees(fetchedEmps);
           setRequests(fetchedReqs);
         }
-      } catch (e) {
+      } catch {
         console.log('Default tracker not found in public folder, using local storage.');
       }
     };
@@ -121,6 +128,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const clearNotifications = () => {
     setNotifications([]);
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(prev => {
+      const newVal = !prev;
+      localStorage.setItem('hertz_sidebar_collapsed', String(newVal));
+      return newVal;
+    });
   };
 
   useEffect(() => {
@@ -168,8 +183,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (newRequests.length === 0) {
         addNotification('Sync complete: No new updates found.', 'info');
       }
-    } catch (e) {
-      console.error('Failed to reset to team data', e);
+    } catch {
+      console.error('Failed to reset to team data');
       addNotification('Failed to sync team data. Please check your connection.', 'warning');
     }
   };
@@ -203,7 +218,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       notifications,
       addNotification,
       markAsRead,
-      clearNotifications
+      clearNotifications,
+      isSidebarCollapsed,
+      toggleSidebar
     }}>
       {children}
     </AppContext.Provider>
